@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Frontend + Nginx (reverse proxy)
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Backend API (Express + SQLite)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-multi-launcher-secret-change-me}
+      - NODE_ENV=production
+    volumes:
+      - db_data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
