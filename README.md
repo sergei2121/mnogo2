@@ -1,6 +1,16 @@
-# Multi Launcher
+# 🚀 Multi Launcher
 
 Веб-приложение для генерации скриптов запуска нескольких копий .exe-файлов на Windows.
+
+## 📖 Описание
+
+Multi Launcher позволяет:
+- Указывать путь к .exe файлу
+- Выбирать метод запуска (простой, через Sandboxie, копирование, переменные окружения)
+- Настраивать количество копий и задержку между запусками
+- Генерировать .bat скрипты для автоматического запуска
+- Управлять конфигурациями через веб-интерфейс
+- Администрировать пользователей
 
 ## 🏗️ Архитектура
 
@@ -17,21 +27,38 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Быстрый старт
+## ⚡ Быстрый старт
 
-### 1. Клонировать и запустить
+### 1. Требования
+
+- Docker 20.10+
+- Docker Compose 2.0+
+
+### 2. Установка
 
 ```bash
+# Клонировать репозиторий
+git clone <repository-url>
+cd multi-launcher
+
+# Создать .env файл
+cat > .env << EOF
+JWT_SECRET=$(openssl rand -base64 32)
+PORT=3001
+NODE_ENV=production
+EOF
+
+# Запустить
 docker-compose up -d --build
 ```
 
-### 2. Открыть в браузере
+### 3. Открыть в браузере
 
 ```
 http://localhost
 ```
 
-### 3. Войти
+### 4. Войти
 
 - **Логин:** `admin`
 - **Пароль:** `admin123`
@@ -70,6 +97,11 @@ http://localhost
 └── package.json
 ```
 
+## 📚 Документация
+
+- **[INSTALL.md](INSTALL.md)** — Подробная инструкция по развертыванию
+- **[API.md](API.md)** — Документация API (скоро)
+
 ## 🔧 Конфигурация
 
 ### Переменные окружения
@@ -77,9 +109,14 @@ http://localhost
 Создайте `.env` в корне проекта:
 
 ```env
-# Сервер
+# Секретный ключ для JWT (ОБЯЗАТЕЛЬНО измените!)
 JWT_SECRET=your-super-secret-key-here
+
+# Порт сервера (опционально)
 PORT=3001
+
+# Режим работы
+NODE_ENV=production
 ```
 
 ### Изменение порта
@@ -122,12 +159,28 @@ ports:
 
 ## 🗄️ База данных
 
-SQLite хранится в Docker volume `db_data`. Бэкап:
+SQLite хранится в Docker volume `db_data`. 
+
+### Бэкап
 
 ```bash
-docker-compose exec server cp /data/multi-launcher.db /data/backup.db
-docker cp $(docker-compose ps -q server):/data/backup.db ./backup.db
+docker cp $(docker-compose ps -q server):/data/multi-launcher.db ./backup.db
 ```
+
+### Восстановление
+
+```bash
+docker-compose stop server
+docker cp ./backup.db $(docker-compose ps -q server):/data/multi-launcher.db
+docker-compose start server
+```
+
+## 🔒 Безопасность
+
+1. **Смените JWT_SECRET** в `.env`
+2. **Смените пароль** администратора после первого входа
+3. Используйте HTTPS (настройте SSL в nginx)
+4. Ограничьте доступ к порту файрволом
 
 ## 🛠️ Разработка
 
@@ -142,13 +195,69 @@ npm install
 npm run dev
 ```
 
-## 🔒 Безопасность
+## 🐛 Устранение неполадок
 
-1. **Смените JWT_SECRET** в docker-compose.yml
-2. **Смените пароль** администратора после первого входа
-3. Используйте HTTPS (настройте SSL в nginx)
-4. Ограничьте доступ к порту 80 файрволом
+### Контейнер не запускается
+
+```bash
+# Проверьте логи
+docker-compose logs server
+
+# Пересоберите
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Порт занят
+
+```bash
+# Найдите процесс
+sudo lsof -i :80
+
+# Остановите или измените порт в docker-compose.yml
+```
+
+### База данных повреждена
+
+```bash
+# Восстановите из бэкапа
+docker cp ./backup.db $(docker-compose ps -q server):/data/multi-launcher.db
+```
+
+## 📊 Мониторинг
+
+```bash
+# Статус контейнеров
+docker-compose ps
+
+# Логи в реальном времени
+docker-compose logs -f
+
+# Использование ресурсов
+docker stats
+```
+
+## 🔄 Обновление
+
+```bash
+docker-compose down
+git pull
+docker-compose build --no-cache
+docker-compose up -d
+```
 
 ## 📝 Лицензия
 
 MIT
+
+## 🆘 Поддержка
+
+Если возникли проблемы:
+
+1. Проверьте логи: `docker-compose logs`
+2. Убедитесь, что Docker запущен
+3. Проверьте файл `.env`
+4. Попробуйте пересобрать: `docker-compose build --no-cache`
+
+Подробная инструкция: **[INSTALL.md](INSTALL.md)**
